@@ -71,15 +71,23 @@ def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_versi
             source_dir='/home/ubuntu/deep-learning-containers/test/sagemaker_tests/pytorch/training/resources/smdataparallel/',
             sagemaker_session=n_virginia_sagemaker_session,
             image_uri=n_virginia_ecr_image,
-            framework_version=framework_version,
+            # framework_version=framework_version,
             hyperparameters=hyperparameters,
             distribution=distribution
         )
         pytorch.fit()
 
-n_virginia_region="us-east-1"
+# n_virginia_region="us-east-1"
+# n_virginia_sagemaker_session= Session(boto_session=boto3.Session(region_name=n_virginia_region))
+# framework_version="1.8.1"
+# n_virginia_ecr_image="763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.8.1-gpu-py36-cu111-ubuntu18.04"
+# instance_types="ml.p3dn.24xlarge"
+
+n_virginia_region="us-west-2"
 n_virginia_sagemaker_session= Session(boto_session=boto3.Session(region_name=n_virginia_region))
-framework_version="1.8.1"
-n_virginia_ecr_image="763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.8.1-gpu-py36-cu111-ubuntu18.04"
+framework_version="1.9.0"
+n_virginia_ecr_image="669063966089.dkr.ecr.us-west-2.amazonaws.com/pr-pytorch-training:1.9.0-gpu-py38-cu111-ubuntu20.04-pr-1132-2021-06-11-19-04-0"
 instance_types="ml.p3dn.24xlarge"
+
+
 test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir=None)
