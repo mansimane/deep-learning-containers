@@ -86,7 +86,7 @@ def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_versi
 n_virginia_region="us-west-2"
 n_virginia_sagemaker_session= Session(boto_session=boto3.Session(region_name=n_virginia_region))
 framework_version="1.9.0"
-n_virginia_ecr_image="669063966089.dkr.ecr.us-west-2.amazonaws.com/pr-pytorch-training:1.9.0-gpu-py38-cu111-ubuntu20.04-pr-1132-2021-06-11-19-04-0"
+n_virginia_ecr_image="669063966089.dkr.ecr.us-west-2.amazonaws.com/pr-pytorch-training:1.9.0-gpu-py38-cu111-ubuntu20.04-pr-1132-2021-06-11-19-04-05"
 instance_types="ml.p3dn.24xlarge"
 
 
