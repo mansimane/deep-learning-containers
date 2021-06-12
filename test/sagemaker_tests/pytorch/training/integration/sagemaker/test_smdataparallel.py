@@ -22,6 +22,8 @@ from ...integration import DEFAULT_TIMEOUT, mnist_path, throughput_path
 from ...integration.sagemaker.timeout import timeout
 from ...integration.sagemaker.test_distributed_operations import can_run_smmodelparallel, _disable_sm_profiler
 from test.test_utils import get_framework_and_version_from_tag, get_cuda_version_from_tag
+from sagemaker import LocalSession, Session
+import boto3
 
 
 def validate_or_skip_smdataparallel(ecr_image):
@@ -47,14 +49,8 @@ def can_run_smdataparallel_efa(ecr_image):
     return Version(image_framework_version) in SpecifierSet(">=1.8.1") and Version(image_cuda_version.strip("cu")) >= Version("110")
 
 
-@pytest.mark.processor("gpu")
-@pytest.mark.model("N/A")
-@pytest.mark.multinode(2)
-@pytest.mark.integration("smdataparallel")
-@pytest.mark.parametrize('instance_types', ["ml.p4d.24xlarge"])
-@pytest.mark.skip_cpu
-@pytest.mark.efa()
-def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir):
+
+def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir=None):
     with timeout(minutes=DEFAULT_TIMEOUT):
         validate_or_skip_smdataparallel_efa(n_virginia_ecr_image)
         hyperparameters = {
@@ -63,7 +59,8 @@ def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_versi
             "iterations": 100,
             "warmup": 10,
             "bucket_size": 25,
-            "info": "PT-{}-N{}".format(instance_types, 2)
+            "info": "PT-{}-N{}".format(instance_types, 2),
+            "nccl": True
         }
         distribution = {'smdistributed': {'dataparallel': {'enabled': True}}}
         pytorch = PyTorch(
@@ -80,92 +77,9 @@ def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_versi
         )
         pytorch.fit()
 
-
-@pytest.mark.integration("smdataparallel")
-@pytest.mark.model("mnist")
-@pytest.mark.processor("gpu")
-@pytest.mark.skip_cpu
-@pytest.mark.skip_py2_containers
-def test_smdataparallel_mnist_script_mode_multigpu(ecr_image, instance_type, py_version, sagemaker_session, tmpdir):
-    """
-    Tests SM Distributed DataParallel single-node via script mode
-    """
-    validate_or_skip_smdataparallel(ecr_image)
-
-    instance_type = "ml.p3.16xlarge"
-    distribution = {"smdistributed": {"dataparallel": {"enabled": True}}}
-    with timeout(minutes=DEFAULT_TIMEOUT):
-        pytorch = PyTorch(entry_point='smdataparallel_mnist_script_mode.sh',
-                          role='SageMakerRole',
-                          image_uri=ecr_image,
-                          source_dir=mnist_path,
-                          instance_count=1,
-                          instance_type=instance_type,
-                          sagemaker_session=sagemaker_session,
-                          distribution=distribution)
-
-        pytorch.fit()
-
-
-@pytest.mark.processor("gpu")
-@pytest.mark.skip_cpu
-@pytest.mark.multinode(2)
-@pytest.mark.integration("smdataparallel")
-@pytest.mark.model("mnist")
-@pytest.mark.skip_py2_containers
-@pytest.mark.flaky(reruns=2)
-@pytest.mark.efa()
-@pytest.mark.parametrize('instance_types', ["ml.p3.16xlarge", "ml.p4d.24xlarge"])
-def test_smdataparallel_mnist(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir):
-    """
-    Tests smddprun command via Estimator API distribution parameter
-    """
-    with timeout(minutes=DEFAULT_TIMEOUT):
-        validate_or_skip_smdataparallel_efa(n_virginia_ecr_image)
-        distribution = {"smdistributed": {"dataparallel": {"enabled": True}}}
-        pytorch = PyTorch(entry_point='smdataparallel_mnist.py',
-                          role='SageMakerRole',
-                          image_uri=n_virginia_ecr_image,
-                          source_dir=mnist_path,
-                          instance_count=2,
-                          instance_type=instance_types,
-                          sagemaker_session=n_virginia_sagemaker_session,
-                          distribution=distribution)
-
-        pytorch.fit()
-
-
-@pytest.mark.processor("gpu")
-@pytest.mark.skip_cpu
-@pytest.mark.integration("smdataparallel_smmodelparallel")
-@pytest.mark.model("mnist")
-@pytest.mark.parametrize('instance_types', ["ml.p3.16xlarge"])
-def test_smmodelparallel_smdataparallel_mnist(instance_types, n_virginia_ecr_image, py_version, n_virginia_sagemaker_session, tmpdir):
-    """
-    Tests SM Distributed DataParallel and ModelParallel single-node via script mode
-    This test has been added for SM DataParallelism and ModelParallelism tests for re:invent.
-    TODO: Consider reworking these tests after re:Invent releases are done
-    """
-    can_run_modelparallel = can_run_smmodelparallel(n_virginia_ecr_image)
-    can_run_dataparallel = can_run_smdataparallel(n_virginia_ecr_image)
-    if can_run_dataparallel and can_run_modelparallel:
-        entry_point = 'smdataparallel_smmodelparallel_mnist_script_mode.sh'
-    elif can_run_dataparallel:
-        entry_point = 'smdataparallel_mnist_script_mode.sh'
-    elif can_run_modelparallel:
-        entry_point = 'smmodelparallel_mnist_script_mode.sh'
-    else:
-        pytest.skip("Both modelparallel and dataparallel dont support this image, nothing to run")
-
-    with timeout(minutes=DEFAULT_TIMEOUT):
-        pytorch = PyTorch(entry_point=entry_point,
-                          role='SageMakerRole',
-                          image_uri=n_virginia_ecr_image,
-                          source_dir=mnist_path,
-                          instance_count=1,
-                          instance_type=instance_types,
-                          sagemaker_session=n_virginia_sagemaker_session)
-
-        pytorch = _disable_sm_profiler(n_virginia_sagemaker_session.boto_region_name, pytorch)
-
-        pytorch.fit()
+n_virginia_region="us-east-1"
+n_virginia_sagemaker_session= Session(boto_session=boto3.Session(region_name=n_virginia_region))
+framework_version="1.8.1"
+n_virginia_ecr_image="763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.8.1-gpu-py36-cu111-ubuntu18.04"
+instance_types="ml.p3dn.24xlarge"
+test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir=None)
