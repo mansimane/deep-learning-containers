@@ -18,14 +18,14 @@ from sagemaker.pytorch import PyTorch
 
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
-from ...integration import DEFAULT_TIMEOUT, mnist_path, throughput_path
-from ...integration.sagemaker.timeout import timeout
-from ...integration.sagemaker.test_distributed_operations import can_run_smmodelparallel, _disable_sm_profiler
-from test.test_utils import get_framework_and_version_from_tag, get_cuda_version_from_tag
+from integration import DEFAULT_TIMEOUT, mnist_path, throughput_path
+from integration.sagemaker.timeout import timeout
+#from integration.sagemaker.test_distributed_operations import can_run_smmodelparallel, _disable_sm_profiler
+#from test.test_utils import get_framework_and_version_from_tag, get_cuda_version_from_tag
 from sagemaker import LocalSession, Session
 import boto3
 
-
+"""
 def validate_or_skip_smdataparallel(ecr_image):
     if not can_run_smdataparallel(ecr_image):
         pytest.skip("Data Parallelism is supported on CUDA 11 on PyTorch v1.6 and above")
@@ -48,11 +48,11 @@ def can_run_smdataparallel_efa(ecr_image):
     image_cuda_version = get_cuda_version_from_tag(ecr_image)
     return Version(image_framework_version) in SpecifierSet(">=1.8.1") and Version(image_cuda_version.strip("cu")) >= Version("110")
 
-
+"""
 
 def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir=None):
     with timeout(minutes=DEFAULT_TIMEOUT):
-        validate_or_skip_smdataparallel_efa(n_virginia_ecr_image)
+        #validate_or_skip_smdataparallel_efa(n_virginia_ecr_image)
         hyperparameters = {
             "size": 64,
             "num_tensors": 20,
@@ -68,7 +68,7 @@ def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_versi
             role='SageMakerRole',
             instance_count=2,
             instance_type=instance_types,
-            source_dir=throughput_path,
+            source_dir='/home/ubuntu/deep-learning-containers/test/sagemaker_tests/pytorch/training/resources/smdataparallel/',
             sagemaker_session=n_virginia_sagemaker_session,
             image_uri=n_virginia_ecr_image,
             framework_version=framework_version,
