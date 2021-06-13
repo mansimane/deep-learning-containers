@@ -112,14 +112,28 @@ artime = []
 
 def test(warmup=False, size=104857600, num_tensors=100, iterations=1):
     if rank == 0: print("Warmup  " if warmup else "\n", end="\t")
+    #from pynvml import *
+    #nvmlInit()
 
     # SETUP
     device = torch.device("cuda", local_rank)
+    print("#### local_rank: ", local_rank, "rank: ", rank, "size: ", size, " device: ", device, " DSIZE: ", DTSIZE, "DTYPE:  ", DTYPE)
+    t = torch.cuda.get_device_properties(0).total_memory
+    r = torch.cuda.memory_reserved(0)
+    a = torch.cuda.memory_allocated(0)
+    f = r-a  # free inside reserved
+    print(" Free pytorch memoery", f)
+
     # Create about 800MB worth of gradients that are a few times larger than a single bucket
     tests = [
         torch.ones(int(size / DTSIZE), dtype=DTYPE, device=device)
         for _ in range(num_tensors)
     ]
+    t = torch.cuda.get_device_properties(0).total_memory
+    r = torch.cuda.memory_reserved(0)
+    a = torch.cuda.memory_allocated(0)
+    f = r-a  # free inside reserved
+    print(" ##### AFTER Free pytorch memoery", f)
 
     # tests_ref = [x.cpu().numpy() for x in tests]
 

@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 import os
-os.environ['CUDA_LAUNCH_BLOCKING'] = 1
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import pytest
 import os
 from sagemaker.pytorch import PyTorch
