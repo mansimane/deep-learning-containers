@@ -117,23 +117,23 @@ def test(warmup=False, size=104857600, num_tensors=100, iterations=1):
 
     # SETUP
     device = torch.device("cuda", local_rank)
-    print("#### local_rank: ", local_rank, "rank: ", rank, "size: ", size, " device: ", device, " DSIZE: ", DTSIZE, "DTYPE:  ", DTYPE)
-    t = torch.cuda.get_device_properties(0).total_memory
-    r = torch.cuda.memory_reserved(0)
-    a = torch.cuda.memory_allocated(0)
-    f = r-a  # free inside reserved
-    print(" Free pytorch memoery", f)
+    # print("#### local_rank: ", local_rank, "rank: ", rank, "size: ", size, " device: ", device, " DSIZE: ", DTSIZE, "DTYPE:  ", DTYPE)
+    # t = torch.cuda.get_device_properties(0).total_memory
+    # r = torch.cuda.memory_reserved(0)
+    # a = torch.cuda.memory_allocated(0)
+    # f = r-a  # free inside reserved
+    # print(" Free pytorch memoery", f)
 
     # Create about 800MB worth of gradients that are a few times larger than a single bucket
     tests = [
         torch.ones(int(size / DTSIZE), dtype=DTYPE, device=device)
         for _ in range(num_tensors)
     ]
-    t = torch.cuda.get_device_properties(0).total_memory
-    r = torch.cuda.memory_reserved(0)
-    a = torch.cuda.memory_allocated(0)
-    f = r-a  # free inside reserved
-    print(" ##### AFTER Free pytorch memoery", f)
+    # t = torch.cuda.get_device_properties(0).total_memory
+    # r = torch.cuda.memory_reserved(0)
+    # a = torch.cuda.memory_allocated(0)
+    # f = r-a  # free inside reserved
+    # print(" ##### AFTER Free pytorch memoery", f)
 
     # tests_ref = [x.cpu().numpy() for x in tests]
 
@@ -206,7 +206,7 @@ if rank == 0:
     net_mn, net_mx = net_throughput(alg_mn), net_throughput(alg_mx)
     print("\nFRAMEWORK TEST", str(args))
     print(
-        "%s %s: %2d %s %20s [MEAN|MAX] net[%4.2f|%4.2f]GB/s alg[%4.3f|%4.3f]Gb/s time[%7.6f|%7.6f]s"
+        "%s %s: %2d %s %20s [MEAN|MAX] net_throuhput [%4.2f|%4.2f]GB/s Bandwidth [%4.3f|%4.3f]Gb/s Time[%7.6f|%7.6f]s"
         % (args.info, "PT.SMDATAPARALLEL" if not args.nccl else "PT.NCCL   ",
            size, "fp32" if args.fp32 else "fp16", "[%dMB x%d]x%d iter" %
            (args.size, args.num_tensors, args.iterations), net_mn, net_mx,
