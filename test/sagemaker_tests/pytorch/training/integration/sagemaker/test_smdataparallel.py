@@ -16,6 +16,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import pytest
 import os
 from sagemaker.pytorch import PyTorch
+import argparse
 
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
@@ -51,7 +52,7 @@ def can_run_smdataparallel_efa(ecr_image):
 
 """
 
-def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir=None):
+def test_smdataparallel_throughput(n_virginia_sagemaker_session, n_virginia_ecr_image, instance_types, tmpdir=None):
     with timeout(minutes=DEFAULT_TIMEOUT):
         #validate_or_skip_smdataparallel_efa(n_virginia_ecr_image)
         hyperparameters = {
@@ -84,11 +85,27 @@ def test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_versi
 # n_virginia_ecr_image="763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.8.1-gpu-py36-cu111-ubuntu18.04"
 # instance_types="ml.p3dn.24xlarge"
 
-n_virginia_region="us-west-2"
+parser = argparse.ArgumentParser()
+parser.add_argument("--n_virginia_ecr_image",
+                    type=str,
+                    default="669063966089.dkr.ecr.us-west-2.amazonaws.com/pr-pytorch-training:1.9.0-gpu-py38-cu111-ubuntu20.04-pr-1132-2021-06-11-19-04-05",
+                    help="Image uri")
+parser.add_argument("--n_virginia_region",
+                    type=str,
+                    default="us-west-2",
+                    help="Region")
+
+args, unknown = parser.parse_known_args()
+print(args)
+
+
+n_virginia_region=args.n_virginia_region
 n_virginia_sagemaker_session= Session(boto_session=boto3.Session(region_name=n_virginia_region))
-framework_version="1.9.0"
-n_virginia_ecr_image="669063966089.dkr.ecr.us-west-2.amazonaws.com/pr-pytorch-training:1.9.0-gpu-py38-cu111-ubuntu20.04-pr-1132-2021-06-11-19-04-05"
+n_virginia_ecr_image=args.n_virginia_ecr_image
+
 instance_types="ml.p3dn.24xlarge"
 
 
-test_smdataparallel_throughput(n_virginia_sagemaker_session, framework_version, n_virginia_ecr_image, instance_types, tmpdir=None)
+test_smdataparallel_throughput(n_virginia_sagemaker_session, \
+                               n_virginia_ecr_image, \
+                               instance_types, tmpdir=None)
